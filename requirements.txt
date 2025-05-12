@@ -1,0 +1,7 @@
+stable-baselines3>=2.0.0
+ale-py>=0.8.1
+gymnasium[atari]>=0.28.1
+torch>=2.0.0
+numpy>=1.21.0
+opencv-python>=4.5.0
+tensorboard>=2.12.0 
