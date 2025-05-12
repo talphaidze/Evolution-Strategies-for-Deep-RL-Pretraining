@@ -49,3 +49,4 @@ DQN_logs/
 *.log
 logs/
 tensorboard/ 
+wandb/

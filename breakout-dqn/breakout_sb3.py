@@ -1,21 +1,33 @@
 import os
+import sys
+
+# Add the parent directory to the Python path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from stable_baselines3.common.env_util import make_atari_env
 from stable_baselines3.common.vec_env import VecFrameStack
 from stable_baselines3.dqn import DQN
 
 import ale_py  
+import wandb
 
+from callbacks.wandb import WandbCallback
+
+# Initialize wandb
+wandb.init(project="breakout-dqn", name="breakout-dqn-sb3")
+
+# Initialize environment
 env = make_atari_env(
     "ALE/Breakout-v5",
     n_envs=1,
     seed=42,
 )
+
+# Stack frames
 env = VecFrameStack(env, n_stack=4)
 env.reset()
 
-
-# os.chdir("Breakout")
+# Initialize models and logs directories
 models_dir = "DQN_models"
 logdir = "DQN_logs"
 if not os.path.exists(models_dir):
@@ -23,7 +35,7 @@ if not os.path.exists(models_dir):
 if not os.path.exists(logdir):
     os.makedirs(logdir)
 
-# Train the agent
+# Initialize model
 model = DQN(
         "CnnPolicy",
         env,
@@ -41,9 +53,9 @@ model = DQN(
         tensorboard_log=logdir,
         )
 
+# Train the agent
+iters = 100
 TIMESTEPS = 10000
-iters = 0
-for i in range(200):
-    iters += 1
-    model.learn(total_timesteps=TIMESTEPS, reset_num_timesteps=False, tb_log_name="DQN_tb_log")
-    model.save(f"{models_dir}/{TIMESTEPS*iters}")
+for i in range(iters):
+    model.learn(total_timesteps=TIMESTEPS, reset_num_timesteps=False, tb_log_name="DQN_tb_log", callback=WandbCallback())
+    model.save(f"{models_dir}/{TIMESTEPS*i}")

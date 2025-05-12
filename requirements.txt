@@ -4,4 +4,5 @@ gymnasium[atari]>=0.28.1
 torch>=2.0.0
 numpy>=1.21.0
 opencv-python>=4.5.0
-tensorboard>=2.12.0 
+tensorboard>=2.14.0
+wandb
