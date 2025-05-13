@@ -1,3 +1,4 @@
+import argparse
 from datetime import datetime
 import os
 import numpy as np
@@ -14,6 +15,11 @@ from es import BaseModel, EvolutionStrategy
 from breakout_dqn_model import BreakoutDQN
 
 def main():
+    # take a debug argument
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--debug", action="store_true", default=False)
+    args = parser.parse_args()
+    
     # Initialize the Breakout environment
     env = make_atari_env("ALE/Breakout-v5", n_envs=1, seed=42)
     env = VecFrameStack(env, n_stack=4)
@@ -59,11 +65,13 @@ def main():
     # Initialize Evolution Strategy with the model
     es = EvolutionStrategy(
         model=breakout_dqn_model,
-        population_size=50,
-        sigma=0.1,
-        learning_rate=0.01,
-        num_episodes=5,
-        save_freq=10,
+        population_size=es_config["population_size"],
+        sigma=es_config["sigma"],
+        learning_rate=es_config["learning_rate"],
+        num_episodes=es_config["num_episodes"],
+        save_freq=es_config["save_freq"],
+        checkpoint_dir=es_config["checkpoint_dir"],
+        debug=args.debug,
     )
     
     combined_config = {

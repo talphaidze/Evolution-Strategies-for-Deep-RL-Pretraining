@@ -37,6 +37,7 @@ class EvolutionStrategy:
         num_episodes: int = 5,
         save_freq: int = 10,
         checkpoint_dir: str = "es_checkpoints",
+        debug: bool = False,
     ):
         """
         Initialize Evolution Strategy.
@@ -56,7 +57,7 @@ class EvolutionStrategy:
         self.learning_rate = learning_rate
         self.num_episodes = num_episodes
         self.save_freq = save_freq
-        
+        self.debug = debug
         # Setup directories
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         self.run_dir = f"run_{timestamp}"
@@ -66,7 +67,8 @@ class EvolutionStrategy:
     def _evaluate_population(
         self, 
         theta: np.ndarray, 
-        noises: List[np.ndarray]
+        noises: List[np.ndarray],
+        generation: int
     ) -> List[float]:
         """Evaluate entire population and return rewards."""
         rewards = []
@@ -80,7 +82,8 @@ class EvolutionStrategy:
             reward = self.model.evaluate(self.num_episodes)
             rewards.append(reward)
             
-            print(f"Individual {i}: Reward = {reward:.2f}")
+            if self.debug:
+                print(f"Generation {generation}, Individual {i}: Reward = {reward:.2f}")
             
         return rewards
 
@@ -97,7 +100,7 @@ class EvolutionStrategy:
             noises = [np.random.normal(0, 1, theta.shape) for _ in range(self.population_size)]
             
             # Evaluate population
-            rewards = self._evaluate_population(theta, noises)
+            rewards = self._evaluate_population(theta, noises, generation)
             rewards = np.array(rewards)
             
             # Compute reward statistics
@@ -135,10 +138,11 @@ class EvolutionStrategy:
                 "best_reward": best_reward,
             })
             
-            print(f"Generation {generation} stats:")
-            print(f"Mean Reward: {mean_reward:.2f}")
-            print(f"Max Reward: {max_reward:.2f}")
-            print(f"Best Reward: {best_reward:.2f}")
+            if self.debug:
+                print(f"Generation {generation} stats:")
+                print(f"Mean Reward: {mean_reward:.2f}")
+                print(f"Max Reward: {max_reward:.2f}")
+                print(f"Best Reward: {best_reward:.2f}")
         
         # Save final checkpoint
         final_metrics = {
