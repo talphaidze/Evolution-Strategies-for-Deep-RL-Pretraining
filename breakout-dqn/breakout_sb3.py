@@ -1,3 +1,4 @@
+from datetime import datetime
 import os
 import sys
 
@@ -28,8 +29,11 @@ env = VecFrameStack(env, n_stack=4)
 env.reset()
 
 # Initialize models and logs directories
-models_dir = "DQN_models"
-logdir = "DQN_logs"
+current_datetime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+subdir = f"run_{current_datetime}"
+models_dir = os.path.join("DQN_models", subdir)
+logdir = os.path.join("DQN_logs", subdir)
+
 if not os.path.exists(models_dir):
     os.makedirs(models_dir)
 if not os.path.exists(logdir):

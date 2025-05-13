@@ -1,8 +1,8 @@
 import os
-import imageio
 import numpy as np
 import argparse
 import torch
+import cv2
 from stable_baselines3.common.env_util import make_atari_env
 from stable_baselines3.common.vec_env import VecFrameStack
 from stable_baselines3.dqn import DQN
@@ -43,10 +43,15 @@ def main():
         models_dir = "DQN_models"
         model_path, model_name = load_latest_model(models_dir)
         print(f"Using latest DQN model: {model_name}")
-    else:
+    elif args.model:
         model_path = args.model
         model_name = os.path.basename(model_path)
         print(f"Using specified model: {model_name}")
+    else:
+        print("No model specified")
+        models_dir = "DQN_models"
+        model_path, model_name = load_latest_model(models_dir)
+        print(f"Using latest DQN model: {model_name}")
     
     # Check if it's an ES checkpoint or DQN model
     if model_path.endswith('.pt'):
@@ -74,21 +79,14 @@ def main():
         # Load DQN model
         model = DQN.load(model_path)
 
-    # Create a directory for videos if it doesn't exist
-    videos_dir = f"videos/{model_name.split('.')[0]}"
-    if not os.path.exists(videos_dir):
-        os.makedirs(videos_dir)
-
-    # Run multiple episodes and record the gameplay
-    all_frames = []
     total_rewards = []
     total_steps = []
 
     print(f"\nStarting {args.episodes} episodes of gameplay...")
+    cv2.namedWindow('Breakout', cv2.WINDOW_NORMAL)
     
     for episode in range(args.episodes):
         print(f"\nEpisode {episode + 1}/{args.episodes}")
-        frames = []
         obs = env.reset()
         done = False
         episode_reward = 0
@@ -101,45 +99,34 @@ def main():
             step += 1
             
             # Print reward for each step
-            print(f"Step {step}: Reward = {reward[0]:.2f}, Total Reward = {episode_reward:.2f}")
+            # print(f"Step {step}: Reward = {reward[0]:.2f}, Total Reward = {episode_reward:.2f}")
             
-            # Get the current frame (first environment)
+            # Get and display the current frame
             frame = env.envs[0].env.env.render()
-            # Ensure frame is in the correct format and size
             if isinstance(frame, np.ndarray):
                 if len(frame.shape) == 2:  # If grayscale, convert to RGB
                     frame = np.stack([frame] * 3, axis=-1)
                 if frame.shape[0] < frame.shape[1]:  # If frame is transposed
                     frame = frame.transpose(1, 0, 2)
-            frames.append(frame)
+                
+                # Display the frame
+                cv2.imshow('Breakout', frame[:, :, ::-1])  # Convert RGB to BGR for OpenCV
+                if cv2.waitKey(1) & 0xFF == ord('q'):  # Press 'q' to quit
+                    break
             
             if done:
                 print(f"Episode {episode + 1} finished with reward: {episode_reward:.2f}")
-                break
+                cv2.waitKey(1000)  # Wait for 1 second between episodes
         
-        all_frames.extend(frames)
         total_rewards.append(episode_reward)
         total_steps.append(step)
-
-    # Save the video with model name in the filename
-    video_name = f"breakout_playback_{model_name.split('.')[0]}.mp4"
-    video_path = os.path.join(videos_dir, video_name)
-    
-    # Ensure all frames are the same size and format
-    all_frames = [frame.astype(np.uint8) for frame in all_frames]
-    print(f"Frame shape: {all_frames[0].shape}")
-    
-    # Save video with proper settings
-    imageio.mimsave(video_path, all_frames, fps=30, quality=8)
-    print(f"Video saved with shape: {all_frames[0].shape}")
 
     print(f"\nFinal Results:")
     print(f"Average reward: {np.mean(total_rewards):.2f} ± {np.std(total_rewards):.2f}")
     print(f"Average steps: {np.mean(total_steps):.2f} ± {np.std(total_steps):.2f}")
-    print(f"Total frames: {len(all_frames)}")
-    print(f"Video saved to: {video_path}")
 
-    # Close the environment
+    # Close everything
+    cv2.destroyAllWindows()
     env.close()
 
 if __name__ == "__main__":
