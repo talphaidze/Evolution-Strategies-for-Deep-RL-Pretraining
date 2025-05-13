@@ -11,7 +11,7 @@ from typing import Dict, Any
 import wandb
 import ale_py
 
-from es import BaseModel, EvolutionStrategy
+from es import EvolutionStrategy
 from breakout_dqn_model import BreakoutDQN
 
 def main():

@@ -10,8 +10,7 @@ from typing import Dict, Any
 import wandb
 import ale_py
 
-from es import BaseModel
-
+from base_model import BaseModel
 
 class BreakoutDQN(BaseModel):
     def __init__(self, env, config):
