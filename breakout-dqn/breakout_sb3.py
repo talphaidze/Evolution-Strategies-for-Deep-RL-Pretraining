@@ -1,3 +1,4 @@
+import argparse
 from datetime import datetime
 import os
 import numpy as np
@@ -14,6 +15,12 @@ from callbacks import WandbCallback
 from breakout_dqn_model import BreakoutDQN
 
 def main():
+    # take a debug argument
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--debug", action="store_true", default=False)
+    args = parser.parse_args()
+    verbose = 1 if args.debug else 0
+    
     # Initialize the Breakout environment
     env = make_atari_env("ALE/Breakout-v5", n_envs=1, seed=42)
     env = VecFrameStack(env, n_stack=4)
@@ -40,7 +47,7 @@ def main():
         "exploration_fraction": 0.1,
         "exploration_final_eps": 0.01,
         "optimize_memory_usage": False,
-        "verbose": 1,
+        "verbose": verbose,
         "tensorboard_log": logdir,
     }
     
