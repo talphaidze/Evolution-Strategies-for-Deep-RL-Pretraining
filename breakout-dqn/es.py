@@ -5,6 +5,20 @@ import wandb
 from datetime import datetime
 from abc import ABC, abstractmethod
 from typing import Dict, Any, List
+import torch.multiprocessing as mp
+
+def evaluate_individual(args):
+    model_cls, theta, noise, sigma, num_episodes, gpu_id = args
+    #CUDA uses the assigned GPU
+    torch.cuda.set_device(gpu_id)
+    #instantiate and move model to the correct device
+    model = model_cls().to(f"cuda:{gpu_id}")
+    perturbed_params = theta + sigma * noise
+    model.set_parameters(perturbed_params)
+    #evaluate on GPU
+    reward = model.evaluate(num_episodes)
+    return reward
+
 
 class BaseModel(ABC):
     @abstractmethod
@@ -28,6 +42,7 @@ class BaseModel(ABC):
         pass
 
 class EvolutionStrategy:
+
     def __init__(
         self,
         model: BaseModel,
@@ -63,26 +78,26 @@ class EvolutionStrategy:
         self.checkpoint_dir = os.path.join(checkpoint_dir, self.run_dir)
         os.makedirs(self.checkpoint_dir, exist_ok=True)
     
-    def _evaluate_population(
-        self, 
-        theta: np.ndarray, 
-        noises: List[np.ndarray]
-    ) -> List[float]:
-        """Evaluate entire population and return rewards."""
-        rewards = []
-        
-        for i, noise in enumerate(noises):
-            # Create perturbed parameters
-            perturbed_params = theta + self.sigma * noise
-            
-            # Set parameters and evaluate
-            self.model.set_parameters(perturbed_params)
-            reward = self.model.evaluate(self.num_episodes)
-            rewards.append(reward)
-            
+    def _evaluate_population(self, theta: np.ndarray, noises: List[np.ndarray]) -> List[float]:
+        """Evaluate entire population using multiple GPUs."""
+        num_gpus = torch.cuda.device_count()
+        args = [
+            (
+                self.model.__class__,
+                theta,
+                noise,
+                self.sigma,
+                self.num_episodes,
+                i % num_gpus  #assign GPUs
+            )
+            for i, noise in enumerate(noises)
+        ]
+        with mp.Pool(processes=self.population_size) as pool:
+            rewards = pool.map(evaluate_individual, args)
+        for i, reward in enumerate(rewards):
             print(f"Individual {i}: Reward = {reward:.2f}")
-            
         return rewards
+
 
     def train(self, num_generations: int = 1000) -> None:
         """Train using evolution strategy."""
