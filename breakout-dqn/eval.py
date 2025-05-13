@@ -1,3 +1,4 @@
+from datetime import datetime
 import os
 import numpy as np
 import argparse
@@ -10,11 +11,25 @@ from stable_baselines3.dqn import DQN
 import ale_py
 
 def load_latest_model(models_dir):
-    model_files = [f for f in os.listdir(models_dir) if f.endswith('.zip')]
+    # Get all subdirectories that match our run format
+    subdirs = [f for f in os.listdir(models_dir) if os.path.isdir(os.path.join(models_dir, f)) and f.startswith('run_')]
+    if not subdirs:
+        raise ValueError(f"No run directories found in {models_dir}")
+    
+    # Parse the datetime from each subdir (removing 'run_' prefix) and find the latest
+    latest_subdir = max(subdirs, key=lambda x: datetime.strptime(x[4:], "%Y-%m-%d_%H-%M-%S"))
+    
+    # Look for model files in the latest subdir
+    subdir_path = os.path.join(models_dir, latest_subdir)
+    model_files = [f for f in os.listdir(subdir_path) if f.endswith('.zip')]
     if not model_files:
-        raise ValueError(f"No model files found in {models_dir}")
+        raise ValueError(f"No model files found in {subdir_path}")
+    
+    # Get the latest model file based on the timestep number
     latest_model = max(model_files, key=lambda x: int(x.split('.')[0]))
-    return os.path.join(models_dir, latest_model), latest_model
+    model_path = os.path.join(subdir_path, latest_model)
+    
+    return model_path, latest_model
 
 def main():
     parser = argparse.ArgumentParser(description='Evaluate Breakout DQN model')
@@ -38,20 +53,20 @@ def main():
     if args.es:
         models_dir = "es_checkpoints"
         model_path, model_name = load_latest_model(models_dir)
-        print(f"Using latest ES checkpoint: {model_name}")
+        print(f"Using latest ES checkpoint: {model_path}")
     elif args.dqn:
         models_dir = "DQN_models"
         model_path, model_name = load_latest_model(models_dir)
-        print(f"Using latest DQN model: {model_name}")
+        print(f"Using latest DQN model: {model_path}")
     elif args.model:
         model_path = args.model
         model_name = os.path.basename(model_path)
-        print(f"Using specified model: {model_name}")
+        print(f"Using specified model: {model_path}")
     else:
         print("No model specified")
         models_dir = "DQN_models"
         model_path, model_name = load_latest_model(models_dir)
-        print(f"Using latest DQN model: {model_name}")
+        print(f"Using latest DQN model: {model_path}")
     
     # Check if it's an ES checkpoint or DQN model
     if model_path.endswith('.pt'):
