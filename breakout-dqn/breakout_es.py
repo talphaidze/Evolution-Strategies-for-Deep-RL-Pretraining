@@ -10,7 +10,7 @@ from typing import Dict, Any
 import wandb
 import ale_py
 
-from callbacks import WandbCallback
+from es import BaseModel, EvolutionStrategy
 from breakout_dqn_model import BreakoutDQN
 
 def main():
@@ -21,8 +21,8 @@ def main():
     # Initialize models and logs directories
     current_datetime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     subdir = f"run_{current_datetime}"
-    models_dir = os.path.join("DQN_sb3_models", subdir)
-    logdir = os.path.join("DQN_sb3_logs", subdir)
+    models_dir = os.path.join("DQN_es_models", subdir)
+    logdir = os.path.join("DQN_es_logs", subdir)
 
     if not os.path.exists(models_dir):
         os.makedirs(models_dir)
@@ -47,29 +47,39 @@ def main():
     # Initialize the Breakout model
     breakout_dqn_model = BreakoutDQN(env, dqn_config)
     
-    sb3_config = {
-        "iters": 100,
-        "timesteps": 10000,
+    es_config = {
+        "population_size": 50,
+        "sigma": 0.2,
+        "learning_rate": 0.01,
+        "num_episodes": 5,
+        "save_freq": 10,
+        "checkpoint_dir": models_dir,
     }
+    
+    # Initialize Evolution Strategy with the model
+    es = EvolutionStrategy(
+        model=breakout_dqn_model,
+        population_size=50,
+        sigma=0.1,
+        learning_rate=0.01,
+        num_episodes=5,
+        save_freq=10,
+    )
     
     combined_config = {
         **dqn_config,
-        **sb3_config
+        **es_config
     }
     
     # Initialize wandb
     wandb.init(
-        project="breakout-dqn-sb3",
-        name=f"sb3_{current_datetime}",
+        project="breakout-dqn-es",
+        name=f"es_{current_datetime}",
         config=combined_config
     )
     
-    # Train dqn
-    iters = sb3_config["iters"]
-    TIMESTEPS = sb3_config["timesteps"]
-    for i in range(iters):
-        breakout_dqn_model.model.learn(total_timesteps=TIMESTEPS, reset_num_timesteps=False, tb_log_name="DQN_tb_log", callback=WandbCallback())
-        breakout_dqn_model.model.save(f"{models_dir}/{TIMESTEPS*i}")
+    # Train using evolution strategy
+    es.train(num_generations=1000)
 
     wandb.finish()
 

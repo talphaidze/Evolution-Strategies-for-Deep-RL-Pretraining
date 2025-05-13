@@ -37,6 +37,10 @@ ENV/
 # Project specific
 DQN_models/
 DQN_logs/
+DQN_sb3_models/
+DQN_sb3_logs/
+DQN_es_models/
+DQN_es_logs/
 *.ckpt
 *.pt
 *.pth

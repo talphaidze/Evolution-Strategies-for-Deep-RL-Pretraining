@@ -51,11 +51,11 @@ def main():
     if args.es and args.dqn:
         raise ValueError("Cannot specify both --es and --dqn")
     if args.es:
-        models_dir = "es_checkpoints"
+        models_dir = "DQN_es_models"
         model_path, model_name = load_latest_model(models_dir)
         print(f"Using latest ES checkpoint: {model_path}")
     elif args.dqn:
-        models_dir = "DQN_models"
+        models_dir = "DQN_sb3_models"
         model_path, model_name = load_latest_model(models_dir)
         print(f"Using latest DQN model: {model_path}")
     elif args.model:
@@ -64,7 +64,7 @@ def main():
         print(f"Using specified model: {model_path}")
     else:
         print("No model specified")
-        models_dir = "DQN_models"
+        models_dir = "DQN_sb3_models"
         model_path, model_name = load_latest_model(models_dir)
         print(f"Using latest DQN model: {model_path}")
     
