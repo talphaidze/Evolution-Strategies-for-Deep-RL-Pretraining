@@ -7,6 +7,7 @@ from stable_baselines3.common.env_util import make_atari_env
 from stable_baselines3.common.vec_env import VecFrameStack
 from stable_baselines3.dqn import DQN
 from typing import Dict, Any
+import torch.multiprocessing as mp
 
 import wandb
 import ale_py
@@ -92,4 +93,5 @@ def main():
     wandb.finish()
 
 if __name__ == "__main__":
+    mp.set_start_method("spawn", force=True)
     main() 

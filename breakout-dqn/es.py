@@ -8,6 +8,7 @@ from typing import Dict, Any, List
 from base_model import BaseModel
 
 class EvolutionStrategy:
+
     def __init__(
         self,
         model: BaseModel,
@@ -66,6 +67,7 @@ class EvolutionStrategy:
                 print(f"Generation {generation}, Individual {i}: Reward = {reward:.2f}")
             
         return rewards
+
 
     def train(self, num_generations: int = 1000) -> None:
         """Train using evolution strategy."""
