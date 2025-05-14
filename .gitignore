@@ -54,3 +54,5 @@ DQN_es_logs/
 logs/
 tensorboard/ 
 wandb/
+*.out
+*.err

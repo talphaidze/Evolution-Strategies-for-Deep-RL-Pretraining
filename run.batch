@@ -1,0 +1,37 @@
+#!/bin/bash -l
+
+
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=1
+#SBATCH --time=08:00:00
+#SBATCH --gres=gpu:1
+#SBATCH --output=../run/logs.txt
+#SBATCH --account=cs-503
+#SBATCH --qos=cs-503
+#SBATCH --mem=64G
+#SBATCH --output=interactive_job.out    # Output log file
+#SBATCH --error=interactive_job.err     # Error log file
+
+source /home/anagupta/breakout/.venv/bin/activate
+
+# Debugging: Check Python and PyTorch
+echo "Python binary: $(which python)"
+echo "Python version: $(python --version)"
+# echo "Torch"
+# pip show torch
+# echo "Load CUDA"
+module load gcc/11.3.0
+module load intel/2021.6.0
+module load nvhpc/23.3-mpi
+module load cuda/11.8.0
+# echo "GPU"
+# nvidia-smi
+# echo "Installed packages:"
+# pip list
+
+
+
+
+# Run the script
+srun python breakout-dqn/breakout_sb3.py
