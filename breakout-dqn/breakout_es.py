@@ -4,7 +4,7 @@ import os
 import numpy as np
 from copy import deepcopy
 from stable_baselines3.common.env_util import make_atari_env
-from stable_baselines3.common.vec_env import VecFrameStack
+from stable_baselines3.common.vec_env import VecFrameStack, DummyVecEnv
 from stable_baselines3.dqn import DQN
 from typing import Dict, Any
 import torch.multiprocessing as mp
@@ -14,6 +14,9 @@ import ale_py
 
 from es import EvolutionStrategy
 from breakout_dqn_model import BreakoutDQN
+import gymnasium as gym
+from gymnasium.envs import registry
+print([env for env in registry.keys() if "Breakout" in env])
 
 def main():
     # take a debug argument
@@ -22,7 +25,15 @@ def main():
     args = parser.parse_args()
     
     # Initialize the Breakout environment
-    env = make_atari_env("ALE/Breakout-v5", n_envs=1, seed=42)
+    # env = make_atari_env("ALE/Breakout-v5", n_envs=1, seed=42)
+    # print(f'observation space: {env.observation_space}')
+    # print(f'action space: {env.action_space}')
+
+    env = gym.make("Breakout-ram-v4")
+    env.reset(seed=42)
+    # print(f'observation space: {env.observation_space}')
+    # print(f'action space: {env.action_space}')
+    env = DummyVecEnv([lambda: env])
     env = VecFrameStack(env, n_stack=4)
     
     # Initialize models and logs directories
@@ -37,6 +48,7 @@ def main():
         os.makedirs(logdir)
     
     dqn_config = {
+        "policy": "MlpPolicy",
         "learning_rate": 2e-4,
         "buffer_size": 100_000,
         "batch_size": 32,
@@ -57,8 +69,8 @@ def main():
     es_config = {
         "population_size": 50,
         "sigma": 0.2,
-        "learning_rate": 0.01,
-        "num_episodes": 5,
+        "learning_rate": 0.1,
+        "num_episodes": 10,
         "save_freq": 10,
         "checkpoint_dir": models_dir,
     }

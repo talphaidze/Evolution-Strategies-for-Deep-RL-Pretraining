@@ -17,7 +17,7 @@ class BreakoutDQN(BaseModel):
         # Initialize the env and DQN model
         self.env = env
         self.model = DQN(
-            "CnnPolicy",
+            config["policy"] if "policy" in config else "CnnPolicy",
             env,
             learning_rate=config["learning_rate"],
             buffer_size=config["buffer_size"],
