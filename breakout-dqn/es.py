@@ -79,8 +79,13 @@ class EvolutionStrategy:
             print(f"\nGeneration {generation}/{num_generations}")
             
             # Generate random noise for each member of the population
-            noises = [np.random.normal(0, 1, theta.shape) for _ in range(self.population_size)]
+            #noises = [np.random.normal(0, 1, theta.shape) for _ in range(self.population_size)]
             
+            # Generate symmetric noise
+            half_pop = self.population_size // 2
+            noise_half = [np.random.normal(0, 1, theta.shape) for _ in range(half_pop)]
+            noises = noise_half + [-n for n in noise_half]  # symmetric perturbations
+
             # Evaluate population
             rewards = self._evaluate_population(theta, noises, generation)
             rewards = np.array(rewards)
@@ -106,12 +111,21 @@ class EvolutionStrategy:
                     self.model.save_checkpoint(checkpoint_path, generation, metrics)
             
             # Compute the reward-weighted sum of noise
-            normalized_rewards = (rewards - np.mean(rewards)) / (np.std(rewards) + 1e-8)
-            weighted_sum = sum(r * n for r, n in zip(normalized_rewards, noises))
+            #normalized_rewards = (rewards - np.mean(rewards)) / (np.std(rewards) + 1e-8)
+            #weighted_sum = sum(r * n for r, n in zip(normalized_rewards, noises))
             
             # Update parameters
+            #theta = theta + self.learning_rate / (self.population_size * self.sigma) * weighted_sum
+
+            # Ranking-based reward shaping
+            ranks = np.argsort(np.argsort(rewards))  # Rank rewards
+            shaped_rewards = (ranks - (self.population_size - 1) / 2) / ((self.population_size - 1) / 2)
+            shaped_rewards = shaped_rewards - np.mean(shaped_rewards)  # Mean-zero
+
+            # Weighted sum of noise
+            weighted_sum = sum(r * n for r, n in zip(shaped_rewards, noises))
             theta = theta + self.learning_rate / (self.population_size * self.sigma) * weighted_sum
-            
+
             # Log metrics
             wandb.log({
                 "generation": generation,
