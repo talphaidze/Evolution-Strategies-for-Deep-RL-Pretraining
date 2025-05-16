@@ -10,8 +10,8 @@
 #SBATCH --account=cs-503
 #SBATCH --qos=cs-503
 #SBATCH --mem=64G
-#SBATCH --output=interactive_job.out    # Output log file
-#SBATCH --error=interactive_job.err     # Error log file
+#SBATCH --output=interactive_job3.out    # Output log file
+#SBATCH --error=interactive_job3.err     # Error log file
 
 source /home/anagupta/breakout/.venv/bin/activate
 

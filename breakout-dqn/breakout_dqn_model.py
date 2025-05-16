@@ -60,8 +60,9 @@ class BreakoutDQN(BaseModel):
             
             while not done:
                 action, _ = self.model.predict(obs, deterministic=True)
-                obs, reward, done, _ = self.env.step(action)
-                episode_reward += reward[0]
+                obs, rewards, dones, _ = self.env.step(action)
+                episode_reward += rewards[0]
+                done = dones[0]
                 
                 if done:
                     break

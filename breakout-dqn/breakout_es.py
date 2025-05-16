@@ -15,8 +15,8 @@ import ale_py
 from es import EvolutionStrategy
 from breakout_dqn_model import BreakoutDQN
 import gymnasium as gym
-from gymnasium.envs import registry
-print([env for env in registry.keys() if "Breakout" in env])
+# from gymnasium.envs import registry
+# print([env for env in registry.keys() if "Breakout" in env])
 
 def main():
     # take a debug argument
@@ -35,6 +35,7 @@ def main():
     # print(f'action space: {env.action_space}')
     env = DummyVecEnv([lambda: env])
     env = VecFrameStack(env, n_stack=4)
+    print("Environment created", flush=True)
     
     # Initialize models and logs directories
     current_datetime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -65,6 +66,8 @@ def main():
     
     # Initialize the Breakout model
     breakout_dqn_model = BreakoutDQN(env, dqn_config)
+    # print number of parameters
+    # print(f"Number of parameters in DQN model: {sum(p.numel() for p in breakout_dqn_model.model.policy.parameters())}")
     
     es_config = {
         "population_size": 50,
@@ -92,6 +95,8 @@ def main():
         **es_config
     }
     
+    print("Models initialized", flush=True)
+    
     # Initialize wandb
     wandb.init(
         project="breakout-dqn-es",
@@ -100,7 +105,9 @@ def main():
     )
     
     # Train using evolution strategy
+    print("Training", flush=True)
     es.train(num_generations=1000)
+    print("Training complete", flush=True)
 
     wandb.finish()
 

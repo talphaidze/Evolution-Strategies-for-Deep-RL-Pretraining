@@ -104,27 +104,27 @@ class EvolutionStrategy:
                         "mean_reward": mean_reward,
                         "max_reward": max_reward,
                     }
-                    checkpoint_path = os.path.join(
-                        self.checkpoint_dir, 
-                        f"es_checkpoint_{generation}.pt"
-                    )
-                    self.model.save_checkpoint(checkpoint_path, generation, metrics)
+                    # checkpoint_path = os.path.join(
+                    #     self.checkpoint_dir, 
+                    #     f"es_checkpoint_{generation}.pt"
+                    # )
+                    # self.model.save_checkpoint(checkpoint_path, generation, metrics)
             
             # Compute the reward-weighted sum of noise
-            #normalized_rewards = (rewards - np.mean(rewards)) / (np.std(rewards) + 1e-8)
-            #weighted_sum = sum(r * n for r, n in zip(normalized_rewards, noises))
+            normalized_rewards = (rewards - np.mean(rewards)) / (np.std(rewards) + 1e-8)
+            weighted_sum = sum(r * n for r, n in zip(normalized_rewards, noises))
             
             # Update parameters
-            #theta = theta + self.learning_rate / (self.population_size * self.sigma) * weighted_sum
+            theta = theta + self.learning_rate / (self.population_size * self.sigma) * weighted_sum
 
             # Ranking-based reward shaping
-            ranks = np.argsort(np.argsort(rewards))  # Rank rewards
-            shaped_rewards = (ranks - (self.population_size - 1) / 2) / ((self.population_size - 1) / 2)
-            shaped_rewards = shaped_rewards - np.mean(shaped_rewards)  # Mean-zero
+            # ranks = np.argsort(np.argsort(rewards))  # Rank rewards
+            # shaped_rewards = (ranks - (self.population_size - 1) / 2) / ((self.population_size - 1) / 2)
+            # shaped_rewards = shaped_rewards - np.mean(shaped_rewards)  # Mean-zero
 
-            # Weighted sum of noise
-            weighted_sum = sum(r * n for r, n in zip(shaped_rewards, noises))
-            theta = theta + self.learning_rate / (self.population_size * self.sigma) * weighted_sum
+            # # Weighted sum of noise
+            # weighted_sum = sum(r * n for r, n in zip(shaped_rewards, noises))
+            # theta = theta + self.learning_rate / (self.population_size * self.sigma) * weighted_sum
 
             # Log metrics
             wandb.log({
