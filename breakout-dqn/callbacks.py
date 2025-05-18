@@ -7,13 +7,15 @@ class WandbCallback(BaseCallback):
         super().__init__(verbose)
         self.episode_rewards = []
         self.episode_lengths = []
-        
+
     def _on_step(self):
-        # Log training info
         if len(self.model.ep_info_buffer) > 0:
             for info in self.model.ep_info_buffer:
+                log_data = {}
                 if 'r' in info:
-                    wandb.log({"episode_reward": info['r']})
+                    log_data["episode_reward"] = info['r']
                 if 'l' in info:
-                    wandb.log({"episode_length": info['l']})
+                    log_data["episode_length"] = info['l']
+                if log_data:
+                    wandb.log(log_data, step=self.num_timesteps)
         return True
