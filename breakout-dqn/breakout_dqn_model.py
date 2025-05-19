@@ -37,39 +37,74 @@ class BreakoutDQN(BaseModel):
         """Extract model parameters as a single flattened array."""
         params = []
         for param in self.model.policy.parameters():
-            params.append(param.data.view(-1).cpu().numpy())
+            params.append(param.data.cpu().numpy().ravel())
         return np.concatenate(params)
     
     def set_parameters(self, params: np.ndarray) -> None:
         """Set model parameters from a single flattened array."""
         start = 0
-        for param in self.model.policy.parameters():
-            size = param.numel()
-            param.data.copy_(torch.from_numpy(
-                params[start:start + size]).view(param.size()))
+        device = next(self.model.policy.parameters()).device
+        
+        for i, param in enumerate(self.model.policy.parameters()):
+            size = param.numel()            
+            try:
+                # Convert to the correct dtype and device
+                param_slice = params[start:start + size]
+                reshaped_params = param_slice.reshape(param.size())
+                tensor_params = torch.from_numpy(reshaped_params).to(dtype=param.dtype, device=device)
+                
+                # Validate the tensor
+                if torch.isnan(tensor_params).any():
+                    print(f"Warning: NaN values in parameter {i}")
+                if torch.isinf(tensor_params).any():
+                    print(f"Warning: Inf values in parameter {i}")
+                
+                # Copy the parameters
+                param.data.copy_(tensor_params)
+            except Exception as e:
+                print(f"Error setting parameter {i}: {str(e)}")
+                print(f"Parameter slice shape: {param_slice.shape}")
+                print(f"Expected shape: {param.size()}")
+                raise
+            
             start += size
     
     def evaluate(self, num_episodes: int) -> float:
         """Evaluate the model for given number of episodes."""
         total_rewards = []
         
-        for _ in range(num_episodes):
+        # Action meanings: 0=NOOP, 1=FIRE, 2=RIGHT, 3=LEFT
+        FIRE_ACTION = 1
+        
+        for episode in range(num_episodes):
             obs = self.env.reset()
             done = False
             episode_reward = 0
+            step = 0
+            lives = 5  # Initial lives in Breakout
+            
+            # Start the game by firing the ball
+            obs, rewards, dones, _ = self.env.step([FIRE_ACTION])
             
             while not done:
                 action, _ = self.model.predict(obs, deterministic=True)
-                obs, rewards, dones, _ = self.env.step(action)
+                obs, rewards, dones, info = self.env.step(action)
                 episode_reward += rewards[0]
                 done = dones[0]
+                step += 1
+
+                # Fire to start new life if ball is lost
+                if 'lives' in info[0] and info[0]['lives'] < lives:
+                    lives = info[0]['lives']
+                    obs, rewards, dones, _ = self.env.step([FIRE_ACTION])
                 
                 if done:
                     break
             
             total_rewards.append(episode_reward)
         
-        return np.mean(total_rewards)
+        mean_reward = np.mean(total_rewards)
+        return mean_reward
     
     def save_checkpoint(self, path: str, generation: int, metrics: Dict[str, Any]) -> None:
         """Save a checkpoint of the model."""

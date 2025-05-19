@@ -9,16 +9,14 @@ class WandbCallback(BaseCallback):
         self.episode_lengths = []
         
     def _on_step(self):
-        # Log training info
-        if len(self.model.ep_info_buffer) > 0 and len(self.model.ep_info_buffer[-1]) > 0:
-            info = self.model.ep_info_buffer[-1]
-            metrics = {}
-            if 'r' in info:
-                metrics["episode_reward"] = info['r']
-            if 'l' in info:
-                metrics["episode_length"] = info['l']
-            
-            # Only log if we have metrics and use the current training step
-            if metrics:
-                wandb.log(metrics, step=self.num_timesteps)
+
+        if len(self.model.ep_info_buffer) > 0:
+            for info in self.model.ep_info_buffer:
+                log_data = {}
+                if 'r' in info:
+                    log_data["episode_reward"] = info['r']
+                if 'l' in info:
+                    log_data["episode_length"] = info['l']
+                if log_data:
+                    wandb.log(log_data, step=self.num_timesteps)
         return True
