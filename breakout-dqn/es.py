@@ -12,11 +12,12 @@ class EvolutionStrategy:
     def __init__(
         self,
         model: BaseModel,
+        num_generations: int,
         population_size: int = 50,
         sigma: float = 0.1,
         learning_rate: float = 0.01,
         num_episodes: int = 5,
-        save_freq: int = 10,
+        save_freq: int = 100,
         checkpoint_dir: str = "es_checkpoints",
         debug: bool = False,
     ):
@@ -33,12 +34,14 @@ class EvolutionStrategy:
             checkpoint_dir: Directory to save checkpoints
         """
         self.model = model
+        self.num_generations = num_generations
         self.population_size = population_size
         self.sigma = sigma
         self.learning_rate = learning_rate
         self.num_episodes = num_episodes
         self.save_freq = save_freq
         self.debug = debug
+        
         # Setup directories
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         self.run_dir = f"run_{timestamp}"
@@ -52,31 +55,33 @@ class EvolutionStrategy:
         generation: int
     ) -> List[float]:
         """Evaluate entire population and return rewards."""
-        rewards = []
-        
-        for i, noise in enumerate(noises):
-            # Create perturbed parameters
-            perturbed_params = theta + self.sigma * noise
-            
-            # Set parameters and evaluate
-            self.model.set_parameters(perturbed_params)
-            reward = self.model.evaluate(self.num_episodes)
-            rewards.append(reward)
-            
-            if self.debug:
-                print(f"Generation {generation}, Individual {i}: Reward = {reward:.2f}")
+        rewards = []        
+        for idx, noise in enumerate(noises):
+            try:
+                # Create perturbed parameters
+                perturbed_params = theta + self.sigma * noise
+                
+                # Set parameters and evaluate
+                self.model.set_parameters(perturbed_params)
+                reward = self.model.evaluate(self.num_episodes)
+                rewards.append(reward)
+                
+                if self.debug:
+                    print(f"Generation {generation}, Individual {idx}: Reward = {reward:.2f}")
+            except Exception as e:
+                print(f"Error evaluating individual {idx}: {str(e)}")
+                raise
             
         return rewards
 
 
-    def train(self, num_generations: int = 1000) -> None:
-        """Train using evolution strategy."""
+    def train(self) -> None:
         # Get initial parameters
         theta = self.model.get_parameters()
         best_reward = float('-inf')
         
-        for generation in range(num_generations):
-            print(f"\nGeneration {generation}/{num_generations}")
+        for generation in range(self.num_generations):
+            print(f"\nGeneration {generation}/{self.num_generations}", flush=True)
             
             # Generate random noise for each member of the population
             #noises = [np.random.normal(0, 1, theta.shape) for _ in range(self.population_size)]
@@ -100,7 +105,6 @@ class EvolutionStrategy:
                 if generation % self.save_freq == 0:
                     metrics = {
                         "reward": best_reward,
-                        "generation": generation,
                         "mean_reward": mean_reward,
                         "max_reward": max_reward,
                     }
@@ -111,41 +115,39 @@ class EvolutionStrategy:
                     self.model.save_checkpoint(checkpoint_path, generation, metrics)
             
             # Compute the reward-weighted sum of noise
-            #normalized_rewards = (rewards - np.mean(rewards)) / (np.std(rewards) + 1e-8)
-            #weighted_sum = sum(r * n for r, n in zip(normalized_rewards, noises))
+            normalized_rewards = (rewards - np.mean(rewards)) / (np.std(rewards) + 1e-8)
+            weighted_sum = sum(r * n for r, n in zip(normalized_rewards, noises))
             
             # Update parameters
-            #theta = theta + self.learning_rate / (self.population_size * self.sigma) * weighted_sum
+            theta = theta + self.learning_rate / (self.population_size * self.sigma) * weighted_sum
 
             # Ranking-based reward shaping
-            ranks = np.argsort(np.argsort(rewards))  # Rank rewards
-            shaped_rewards = (ranks - (self.population_size - 1) / 2) / ((self.population_size - 1) / 2)
-            shaped_rewards = shaped_rewards - np.mean(shaped_rewards)  # Mean-zero
+            # ranks = np.argsort(np.argsort(rewards))  # Rank rewards
+            # shaped_rewards = (ranks - (self.population_size - 1) / 2) / ((self.population_size - 1) / 2)
+            # shaped_rewards = shaped_rewards - np.mean(shaped_rewards)  # Mean-zero
 
-            # Weighted sum of noise
-            weighted_sum = sum(r * n for r, n in zip(shaped_rewards, noises))
-            theta = theta + self.learning_rate / (self.population_size * self.sigma) * weighted_sum
+            # # Weighted sum of noise
+            # weighted_sum = sum(r * n for r, n in zip(shaped_rewards, noises))
+            # theta = theta + self.learning_rate / (self.population_size * self.sigma) * weighted_sum
 
             # Log metrics
             wandb.log({
-                "generation": generation,
                 "mean_reward": mean_reward,
                 "max_reward": max_reward,
-                "best_reward": best_reward,
-            })
+                "best_reward_so_far": best_reward,
+            }, step=generation)
             
-            if self.debug:
-                print(f"Generation {generation} stats:")
-                print(f"Mean Reward: {mean_reward:.2f}")
-                print(f"Max Reward: {max_reward:.2f}")
-                print(f"Best Reward: {best_reward:.2f}")
+            print(f"Generation {generation} done")
+            print(f"Mean Reward: {mean_reward:.2f}")
+            print(f"Max Reward: {max_reward:.2f}")
+            print(f"Best Reward so far: {best_reward:.2f}")
         
         # Save final checkpoint
         final_metrics = {
             "reward": best_reward,
-            "generation": num_generations,
+            "generation": self.num_generations,
             "mean_reward": mean_reward,
             "max_reward": max_reward,
         }
         final_path = os.path.join(self.checkpoint_dir, f"es_checkpoint_final.pt")
-        self.model.save_checkpoint(final_path, num_generations, final_metrics)
+        self.model.save_checkpoint(final_path, self.num_generations, final_metrics)

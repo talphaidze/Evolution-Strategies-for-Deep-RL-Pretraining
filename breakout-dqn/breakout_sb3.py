@@ -37,7 +37,8 @@ def main():
         os.makedirs(logdir)
     
     dqn_config = {
-        "learning_rate": 1e-4,
+        "policy": "CnnPolicy",
+        "learning_rate": 2e-4,
         "buffer_size": 100_000,
         "batch_size": 32,
         "learning_starts": 100_000,
