@@ -48,18 +48,15 @@ class BreakoutDQN(BaseModel):
         for i, param in enumerate(self.model.policy.parameters()):
             size = param.numel()            
             try:
-                # Convert to the correct dtype and device
                 param_slice = params[start:start + size]
                 reshaped_params = param_slice.reshape(param.size())
                 tensor_params = torch.from_numpy(reshaped_params).to(dtype=param.dtype, device=device)
                 
-                # Validate the tensor
                 if torch.isnan(tensor_params).any():
                     print(f"Warning: NaN values in parameter {i}")
                 if torch.isinf(tensor_params).any():
                     print(f"Warning: Inf values in parameter {i}")
                 
-                # Copy the parameters
                 param.data.copy_(tensor_params)
             except Exception as e:
                 print(f"Error setting parameter {i}: {str(e)}")
@@ -73,7 +70,7 @@ class BreakoutDQN(BaseModel):
         """Evaluate the model for given number of episodes."""
         total_rewards = []
         
-        # Action meanings: 0=NOOP, 1=FIRE, 2=RIGHT, 3=LEFT
+        # Actions: 0=NOOP, 1=FIRE, 2=RIGHT, 3=LEFT
         FIRE_ACTION = 1
         
         for episode in range(num_episodes):
@@ -81,7 +78,7 @@ class BreakoutDQN(BaseModel):
             done = False
             episode_reward = 0
             step = 0
-            lives = 5  # Initial lives in Breakout
+            lives = 5
             
             # Start the game by firing the ball
             obs, rewards, dones, _ = self.env.step([FIRE_ACTION])

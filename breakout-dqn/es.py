@@ -17,7 +17,7 @@ class EvolutionStrategy:
         sigma: float = 0.1,
         learning_rate: float = 0.01,
         num_episodes: int = 5,
-        save_freq: int = 10,
+        save_freq: int = 100,
         checkpoint_dir: str = "es_checkpoints",
         debug: bool = False,
     ):
@@ -41,6 +41,7 @@ class EvolutionStrategy:
         self.num_episodes = num_episodes
         self.save_freq = save_freq
         self.debug = debug
+        
         # Setup directories
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         self.run_dir = f"run_{timestamp}"
@@ -75,7 +76,6 @@ class EvolutionStrategy:
 
 
     def train(self) -> None:
-        """Train using evolution strategy."""
         # Get initial parameters
         theta = self.model.get_parameters()
         best_reward = float('-inf')
@@ -108,11 +108,11 @@ class EvolutionStrategy:
                         "mean_reward": mean_reward,
                         "max_reward": max_reward,
                     }
-                    # checkpoint_path = os.path.join(
-                    #     self.checkpoint_dir, 
-                    #     f"es_checkpoint_{generation}.pt"
-                    # )
-                    # self.model.save_checkpoint(checkpoint_path, generation, metrics)
+                    checkpoint_path = os.path.join(
+                        self.checkpoint_dir, 
+                        f"es_checkpoint_{generation}.pt"
+                    )
+                    self.model.save_checkpoint(checkpoint_path, generation, metrics)
             
             # Compute the reward-weighted sum of noise
             normalized_rewards = (rewards - np.mean(rewards)) / (np.std(rewards) + 1e-8)

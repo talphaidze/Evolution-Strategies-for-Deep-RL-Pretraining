@@ -7,7 +7,6 @@ from stable_baselines3.common.env_util import make_atari_env
 from stable_baselines3.common.vec_env import VecFrameStack, DummyVecEnv
 from stable_baselines3.dqn import DQN
 from typing import Dict, Any
-import torch.multiprocessing as mp
 
 import wandb
 import ale_py
@@ -15,8 +14,6 @@ import ale_py
 from es import EvolutionStrategy
 from breakout_dqn_model import BreakoutDQN
 import gymnasium as gym
-# from gymnasium.envs import registry
-# print([env for env in registry.keys() if "Breakout" in env])
 
 def main():
     # take a debug argument
@@ -73,10 +70,6 @@ def main():
         }
     }
     
-    # Initialize the Breakout model
-    breakout_dqn_model = BreakoutDQN(env, dqn_config)
-    print(f"Number of parameters in DQN model: {sum(p.numel() for p in breakout_dqn_model.model.policy.parameters())}", flush=True)
-    
     es_config = {
         "num_generations": 500,
         "population_size": 50,
@@ -86,6 +79,15 @@ def main():
         "save_freq": 100,
         "checkpoint_dir": models_dir,
     }
+    
+    combined_config = {
+        **dqn_config,
+        **es_config
+    }
+    
+    # Initialize the Breakout model
+    breakout_dqn_model = BreakoutDQN(env, dqn_config)
+    print(f"Number of parameters in DQN model: {sum(p.numel() for p in breakout_dqn_model.model.policy.parameters())}", flush=True)
     
     # Initialize Evolution Strategy with the model
     es = EvolutionStrategy(
@@ -99,19 +101,14 @@ def main():
         checkpoint_dir=es_config["checkpoint_dir"],
         debug=args.debug,
     )
-    
-    combined_config = {
-        **dqn_config,
-        **es_config
-    }
-    
     print("Models initialized", flush=True)
     
     # Initialize wandb
     wandb.init(
         project="breakout-dqn-es",
         name=f"es_{current_datetime}",
-        config=combined_config
+        config=combined_config,
+        mode="disabled" if args.debug else "online"
     )
     
     # Train using evolution strategy
@@ -122,5 +119,4 @@ def main():
     wandb.finish()
 
 if __name__ == "__main__":
-    mp.set_start_method("spawn", force=True)
     main() 
