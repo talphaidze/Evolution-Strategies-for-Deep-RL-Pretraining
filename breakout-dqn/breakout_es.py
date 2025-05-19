@@ -105,7 +105,7 @@ def main():
     
     # Initialize wandb
     wandb.init(
-        project="breakout-dqn-es",
+        project="breakout-dqn-es-{}".format(args.state),
         name=f"es_{current_datetime}",
         config=combined_config,
         mode="disabled" if args.debug else "online"
