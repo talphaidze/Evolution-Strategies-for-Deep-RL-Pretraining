@@ -42,13 +42,13 @@ def main():
         "buffer_size": 100_000,
         "batch_size": 32,
         "learning_starts": 100_000,
-        "target_update_interval": 5000,
+        "target_update_interval": 1000,
         "train_freq": 4,
         "gradient_steps": 1,
         "exploration_fraction": 0.1,
         "exploration_final_eps": 0.01,
         "optimize_memory_usage": False,
-        "verbose": verbose,
+        "verbose": 0,
         "tensorboard_log": logdir,
     }
     
