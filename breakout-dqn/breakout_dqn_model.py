@@ -69,6 +69,7 @@ class BreakoutDQN(BaseModel):
     def evaluate(self, num_episodes: int) -> float:
         """Evaluate the model for given number of episodes."""
         total_rewards = []
+        total_episode_lengths = []
         
         # Actions: 0=NOOP, 1=FIRE, 2=RIGHT, 3=LEFT
         FIRE_ACTION = 1
@@ -77,31 +78,35 @@ class BreakoutDQN(BaseModel):
             obs = self.env.reset()
             done = False
             episode_reward = 0
-            step = 0
             lives = 5
+            episode_length = 0
             
             # Start the game by firing the ball
             obs, rewards, dones, _ = self.env.step([FIRE_ACTION])
-            
+            self.model.num_timesteps += 1
+            episode_length += 1
             while not done:
                 action, _ = self.model.predict(obs, deterministic=True)
                 obs, rewards, dones, info = self.env.step(action)
+                self.model.num_timesteps += 1
+                episode_length += 1
                 episode_reward += rewards[0]
                 done = dones[0]
-                step += 1
 
                 # Fire to start new life if ball is lost
                 if 'lives' in info[0] and info[0]['lives'] < lives:
                     lives = info[0]['lives']
                     obs, rewards, dones, _ = self.env.step([FIRE_ACTION])
-                
+                    self.model.num_timesteps += 1
+                    episode_length += 1
                 if done:
                     break
             
             total_rewards.append(episode_reward)
-        
+            total_episode_lengths.append(episode_length)
         mean_reward = np.mean(total_rewards)
-        return mean_reward
+        mean_episode_length = np.mean(total_episode_lengths)
+        return mean_reward, mean_episode_length
     
     def save_checkpoint(self, path: str, generation: int, metrics: Dict[str, Any]) -> None:
         """Save a checkpoint of the model."""

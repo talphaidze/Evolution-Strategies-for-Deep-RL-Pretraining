@@ -71,8 +71,8 @@ def main():
     }
     
     es_config = {
-        "num_generations": 500,
-        "population_size": 50,
+        "num_generations": 10,
+        "population_size": 10,
         "sigma": 0.2,
         "learning_rate": 0.01,
         "num_episodes": 5,

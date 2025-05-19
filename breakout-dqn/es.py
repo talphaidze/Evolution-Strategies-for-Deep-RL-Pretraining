@@ -55,7 +55,8 @@ class EvolutionStrategy:
         generation: int
     ) -> List[float]:
         """Evaluate entire population and return rewards."""
-        rewards = []        
+        rewards = [] 
+        episode_lengths = []
         for idx, noise in enumerate(noises):
             try:
                 # Create perturbed parameters
@@ -63,16 +64,16 @@ class EvolutionStrategy:
                 
                 # Set parameters and evaluate
                 self.model.set_parameters(perturbed_params)
-                reward = self.model.evaluate(self.num_episodes)
+                reward, episode_length = self.model.evaluate(self.num_episodes)
                 rewards.append(reward)
-                
+                episode_lengths.append(episode_length)
                 if self.debug:
                     print(f"Generation {generation}, Individual {idx}: Reward = {reward:.2f}")
             except Exception as e:
                 print(f"Error evaluating individual {idx}: {str(e)}")
                 raise
             
-        return rewards
+        return rewards, episode_lengths
 
 
     def train(self) -> None:
@@ -92,12 +93,14 @@ class EvolutionStrategy:
             noises = noise_half + [-n for n in noise_half]  # symmetric perturbations
 
             # Evaluate population
-            rewards = self._evaluate_population(theta, noises, generation)
+            rewards, episode_lengths = self._evaluate_population(theta, noises, generation)
             rewards = np.array(rewards)
-            
+            episode_lengths = np.array(episode_lengths)
             # Compute reward statistics
             mean_reward = np.mean(rewards)
             max_reward = np.max(rewards)
+            mean_episode_length = np.mean(episode_lengths)
+            max_episode_length = np.max(episode_lengths)
             
             # Update best reward and save checkpoint if needed
             if max_reward > best_reward:
@@ -107,6 +110,8 @@ class EvolutionStrategy:
                         "reward": best_reward,
                         "mean_reward": mean_reward,
                         "max_reward": max_reward,
+                        "mean_episode_length": mean_episode_length,
+                        "max_episode_length": max_episode_length,
                     }
                     checkpoint_path = os.path.join(
                         self.checkpoint_dir, 
@@ -135,12 +140,18 @@ class EvolutionStrategy:
                 "mean_reward": mean_reward,
                 "max_reward": max_reward,
                 "best_reward_so_far": best_reward,
-            }, step=generation)
+                "mean_episode_length": mean_episode_length,
+                "max_episode_length": max_episode_length,
+            }, step=self.model.model.num_timesteps)
+            
+            print(f"num_timesteps: {self.model.model.num_timesteps}")
             
             print(f"Generation {generation} done")
             print(f"Mean Reward: {mean_reward:.2f}")
             print(f"Max Reward: {max_reward:.2f}")
             print(f"Best Reward so far: {best_reward:.2f}")
+            print(f"Mean Episode Length: {mean_episode_length:.2f}")
+            print(f"Max Episode Length: {max_episode_length:.2f}")
         
         # Save final checkpoint
         final_metrics = {
@@ -148,6 +159,8 @@ class EvolutionStrategy:
             "generation": self.num_generations,
             "mean_reward": mean_reward,
             "max_reward": max_reward,
+            "mean_episode_length": mean_episode_length,
+            "max_episode_length": max_episode_length,
         }
         final_path = os.path.join(self.checkpoint_dir, f"es_checkpoint_final.pt")
         self.model.save_checkpoint(final_path, self.num_generations, final_metrics)
