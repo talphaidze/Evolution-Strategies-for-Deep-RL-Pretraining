@@ -1,6 +1,7 @@
 import argparse
 from datetime import datetime
 import os
+import time
 import numpy as np
 from copy import deepcopy
 from stable_baselines3.common.env_util import make_atari_env
@@ -31,6 +32,7 @@ def main():
     elif args.state == "ram":
         # RAM state provides 128 bytes of the Atari 2600's RAM
         env = gym.make("Breakout-ram-v4", render_mode=None)
+        env = gym.wrappers.RecordEpisodeStatistics(env)  # Add episode statistics wrapper
         env.reset(seed=42)
         env = DummyVecEnv([lambda: env])
     else:
@@ -64,7 +66,7 @@ def main():
         "exploration_fraction": 0.1,
         "exploration_final_eps": 0.01,
         "optimize_memory_usage": False,
-        "verbose": verbose,
+        "verbose": 1,
         "tensorboard_log": logdir,
     }
     
@@ -88,16 +90,24 @@ def main():
     wandb.init(
         project="breakout-dqn-sb3-{}".format(args.state),
         name=f"sb3_{current_datetime}",
-        config=combined_config,
+        config={
+            **dqn_config,
+            **sb3_config,
+            "state_type": args.state,
+            "debug": args.debug,
+            "env": "Breakout-v5" if args.state == "image" else "Breakout-ram-v4",
+            "policy": "CnnPolicy" if args.state == "image" else "MlpPolicy",
+        },
         mode="disabled" if args.debug else "online"
-    )
+        )
     
     # Train dqn
     print("Training...", flush=True)
     iters = sb3_config["iters"]
     TIMESTEPS = sb3_config["timesteps"]
+    start_time = time.time()
     for i in range(iters):
-        breakout_dqn_model.model.learn(total_timesteps=TIMESTEPS, reset_num_timesteps=False, tb_log_name="DQN_tb_log", callback=WandbCallback())
+        breakout_dqn_model.model.learn(total_timesteps=TIMESTEPS, reset_num_timesteps=False, tb_log_name="DQN_tb_log", callback=WandbCallback(start_time))
         breakout_dqn_model.model.save(f"{models_dir}/{TIMESTEPS*i}")
     print("Training complete", flush=True)
 
