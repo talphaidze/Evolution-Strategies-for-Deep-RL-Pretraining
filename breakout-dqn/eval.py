@@ -37,7 +37,13 @@ def main():
     parser.add_argument('--dqn', action='store_true', help='Use DQN model')
     parser.add_argument('--model', type=str, help='Path to the model file to use (e.g., DQN_tmp/10000.zip or es_checkpoints/es_checkpoint_final.pt)')
     parser.add_argument('--episodes', type=int, default=5, help='Number of episodes to record')
+    parser.add_argument('--save_video', action='store_true', help='Save gameplay videos')
+    parser.add_argument('--video_dir', type=str, default='gameplay_videos', help='Directory to save videos')
     args = parser.parse_args()
+
+    # Create video directory if saving videos
+    if args.save_video:
+        os.makedirs(args.video_dir, exist_ok=True)
 
     # Create the environment
     env = make_atari_env(
@@ -94,28 +100,46 @@ def main():
         # Load DQN model
         model = DQN.load(model_path)
 
-    total_rewards = []
-    total_steps = []
-
     print(f"\nStarting {args.episodes} episodes of gameplay...")
     cv2.namedWindow('Breakout', cv2.WINDOW_NORMAL)
+    
+    total_rewards = []
+    total_episode_lengths = []
+    
+    # Actions: 0=NOOP, 1=FIRE, 2=RIGHT, 3=LEFT
+    FIRE_ACTION = 1
     
     for episode in range(args.episodes):
         print(f"\nEpisode {episode + 1}/{args.episodes}")
         obs = env.reset()
         done = False
         episode_reward = 0
-        step = 0
-
+        lives = 5
+        episode_length = 0
+        
+        # Initialize video writer if saving videos
+        if args.save_video:
+            video_path = os.path.join(args.video_dir, f'episode_{episode+1}.mp4')
+            # Get frame dimensions from first frame
+            frame = env.envs[0].env.env.render()
+            if isinstance(frame, np.ndarray):
+                if len(frame.shape) == 2:  # If grayscale, convert to RGB
+                    frame = np.stack([frame] * 3, axis=-1)
+                if frame.shape[0] < frame.shape[1]:  # If frame is transposed
+                    frame = frame.transpose(1, 0, 2)
+                height, width = frame.shape[:2]
+                fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+                video_writer = cv2.VideoWriter(video_path, fourcc, 30.0, (width, height))
+        
+        # Start the game by firing the ball
+        obs, rewards, dones, _ = env.step([FIRE_ACTION])
+        episode_length += 1
         while not done:
             action, _ = model.predict(obs, deterministic=True)
-            obs, reward, done, info = env.step(action)
-            episode_reward += reward[0]
-            step += 1
-            
-            # Print reward for each step
-            # print(f"Step {step}: Reward = {reward[0]:.2f}, Total Reward = {episode_reward:.2f}")
-            
+            obs, rewards, dones, info = env.step(action)
+            episode_length += 1
+            episode_reward += rewards[0]
+            done = dones[0]
             # Get and display the current frame
             frame = env.envs[0].env.env.render()
             if isinstance(frame, np.ndarray):
@@ -126,19 +150,54 @@ def main():
                 
                 # Display the frame
                 cv2.imshow('Breakout', frame[:, :, ::-1])  # Convert RGB to BGR for OpenCV
+                
+                # Save frame if recording
+                if args.save_video:
+                    video_writer.write(frame[:, :, ::-1])  # Convert RGB to BGR for OpenCV
+                
                 if cv2.waitKey(1) & 0xFF == ord('q'):  # Press 'q' to quit
                     break
-            
+
+            # Fire to start new life if ball is lost
+            if 'lives' in info[0] and info[0]['lives'] < lives:
+                lives = info[0]['lives']
+                obs, rewards, dones, _ = env.step([FIRE_ACTION])
+                episode_length += 1
+                # Get and display the current frame
+                frame = env.envs[0].env.env.render()
+                if isinstance(frame, np.ndarray):
+                    if len(frame.shape) == 2:  # If grayscale, convert to RGB
+                        frame = np.stack([frame] * 3, axis=-1)
+                    if frame.shape[0] < frame.shape[1]:  # If frame is transposed
+                        frame = frame.transpose(1, 0, 2)
+                    
+                    # Display the frame
+                    cv2.imshow('Breakout', frame[:, :, ::-1])  # Convert RGB to BGR for OpenCV
+                    
+                    # Save frame if recording
+                    if args.save_video:
+                        video_writer.write(frame[:, :, ::-1])  # Convert RGB to BGR for OpenCV
+                    
+                    if cv2.waitKey(1) & 0xFF == ord('q'):  # Press 'q' to quit
+                        break
             if done:
                 print(f"Episode {episode + 1} finished with reward: {episode_reward:.2f}")
                 cv2.waitKey(1000)  # Wait for 1 second between episodes
+                break
+        
+        # Release video writer if saving videos
+        if args.save_video:
+            video_writer.release()
+            print(f"Saved video to {video_path}")
         
         total_rewards.append(episode_reward)
-        total_steps.append(step)
+        total_episode_lengths.append(episode_length)
+        mean_reward = np.mean(total_rewards)
+        mean_episode_length = np.mean(total_episode_lengths)
 
     print(f"\nFinal Results:")
     print(f"Average reward: {np.mean(total_rewards):.2f} ± {np.std(total_rewards):.2f}")
-    print(f"Average steps: {np.mean(total_steps):.2f} ± {np.std(total_steps):.2f}")
+    print(f"Average steps: {np.mean(total_episode_lengths):.2f} ± {np.std(total_episode_lengths):.2f}")
 
     # Close everything
     cv2.destroyAllWindows()
