@@ -38,7 +38,7 @@ def main():
     parser.add_argument('--model', type=str, help='Path to the model file to use (e.g., DQN_tmp/10000.zip or es_checkpoints/es_checkpoint_final.pt)')
     parser.add_argument('--episodes', type=int, default=5, help='Number of episodes to record')
     parser.add_argument('--save_video', action='store_true', help='Save gameplay videos')
-    parser.add_argument('--video_dir', type=str, default='gameplay_videos', help='Directory to save videos')
+    parser.add_argument('--video_dir', type=str, default='videos', help='Directory to save videos')
     args = parser.parse_args()
 
     # Create video directory if saving videos

@@ -45,6 +45,7 @@ DQN_es_logs/
 *.pt
 *.pth
 *.h5
+*.zip
 
 # Jupyter Notebook
 .ipynb_checkpoints
@@ -56,3 +57,6 @@ tensorboard/
 wandb/
 *.out
 *.err
+
+# Videos
+videos/
