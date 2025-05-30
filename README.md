@@ -38,8 +38,21 @@ Deep Reinforcement Learning has shown remarkable success in complex sequential d
 │   ├── train_dqn.py
 │   ├── train_dqn_es.py
 │   └── train_es.py
-├── MuJoCo/
-│   └── [MuJoCo implementation files]
+├── Mujoco/
+│   ├── src/
+│   │   └── es_drl/
+│   │       ├── es/
+│   │       │   ├── base.py              # Base ES class with common functionality
+│   │       │   ├── basic_es.py          # Basic ES implementation
+│   │       │   ├── brax_training_utils.py # Training utilities for Brax environments
+│   │       │   ├── ppo.py               # PPO implementation with clipped objective
+│   │       │   ├── ppo_training_utils.py # PPO training utilities
+│   │       │   └── pretraining.py       # Combined ES and PPO pretraining
+│   │       ├── utils/
+│   │       │   ├── callbacks.py         # Training callbacks for monitoring
+│   │       │   └── logger.py            # Logging utilities
+│   │       └── main_es.py               # Main training script
+│   └── README.md
 └── README.md
 
 ```
@@ -61,10 +74,10 @@ Deep Reinforcement Learning has shown remarkable success in complex sequential d
 - **Key Result**: ES struggles with high-dimensional input spaces; DQN maintains performance advantage
 
 ### 3. MuJoCo Environments
-- **Type**: Continuous control tasks (HalfCheetah, Hopper, Walker2d)
+- **Type**: Continuous control tasks (HalfCheetah, Hopper, Walker2d, Humanoid, Reacher, Swimmer)
 - **Algorithms**: PPO vs ES
 - **Architecture**: 4 hidden layers with 32 units each
-- **Key Result**: PPO shows inconsistent performance across seeds but faster convergence when successful; ES more stable but significantly slower
+- **Key Result**: PPO shows inconsistent performance across seeds and environments - while it converges 20x faster than ES in HalfCheetah, it fails to converge in Walker2d and Hopper. ES is slower but provides more stable and repeatable outcomes across all environments.
 
 ## Getting Started
 
@@ -82,6 +95,12 @@ pip install pygame
 pip install ple  # PyGame Learning Environment (for Flappy Bird)
 pip install matplotlib
 pip install brax  # For MuJoCo environments
+pip install jax[cuda]  # For GPU support
+pip install imageio[ffmpeg]  # For video recording
+pip install mujoco  # MuJoCo physics engine
+pip install mujoco_mjx  # MuJoCo MJX implementation
+pip install joblib  # For parallel processing
+pip install pre-commit  # For code quality checks
 ```
 ### Running Experiments
 
@@ -127,8 +146,8 @@ python run_dqn.py
 
 #### MuJoCo
 ```bash
-cd MuJoCo/
-# Follow similar pattern with respective training scripts
+cd Mujoco/
+python src/es_drl/main_es.py --config path/to/config.yaml --seed 42 --env_id hopper
 ```
 
 ## Algorithm Implementations
@@ -161,7 +180,7 @@ cd MuJoCo/
 
 ### MuJoCo
 - **PPO**: Default Brax configurations with 8192 parallel environments
-- **ES**: Lightweight architecture for efficient optimization
+- **ES**: Population size 4096, noise std 0.01, learning rate 0.01, lightweight architecture for efficient optimization
 
 ## Logging and Monitoring
 
@@ -177,7 +196,7 @@ The repository uses **Weights & Biases (WandB)** for experiment tracking:
 |-------------|---------------|-----------------|-------------------|
 | Flappy Bird | Good stability | Higher final reward | ✅ Effective |
 | Breakout | Poor scaling | Strong performance | ❌ Limited |
-| MuJoCo | Stable but slow | Fast but unstable | ❌ No improvement |
+| MuJoCo | Stable but slow | Fast but inconsistent | ❌ No improvement |
 
 ## Authors
 

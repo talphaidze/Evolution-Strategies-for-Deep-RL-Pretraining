@@ -1,0 +1,11 @@
+es_name: "pretraining"
+hidden_sizes: [32,32,32,32]
+es_sigma: 0.01
+es_population_size: 4096
+es_learning_rate: 0.01
+es_num_timesteps: 50_000_000
+ppo_num_envs: 8192
+ppo_batch_size: 1024
+ppo_learning_rate: 0.00003
+ppo_num_timesteps: 950_000_000
+verbose: true
