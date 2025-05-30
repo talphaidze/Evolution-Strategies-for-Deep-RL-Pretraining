@@ -38,8 +38,21 @@ Deep Reinforcement Learning has shown remarkable success in complex sequential d
 │   ├── train_dqn.py
 │   ├── train_dqn_es.py
 │   └── train_es.py
-├── MuJoCo/
-│   └── [MuJoCo implementation files]
+├── Mujoco/
+│   ├── src/
+│   │   └── es_drl/
+│   │       ├── es/
+│   │       │   ├── base.py              # Base ES class with common functionality
+│   │       │   ├── basic_es.py          # Basic ES implementation
+│   │       │   ├── brax_training_utils.py # Training utilities for Brax environments
+│   │       │   ├── ppo.py               # PPO implementation with clipped objective
+│   │       │   ├── ppo_training_utils.py # PPO training utilities
+│   │       │   └── pretraining.py       # Combined ES and PPO pretraining
+│   │       ├── utils/
+│   │       │   ├── callbacks.py         # Training callbacks for monitoring
+│   │       │   └── logger.py            # Logging utilities
+│   │       └── main_es.py               # Main training script
+│   └── README.md
 └── README.md
 
 ```
@@ -64,7 +77,7 @@ Deep Reinforcement Learning has shown remarkable success in complex sequential d
 - **Type**: Continuous control tasks (HalfCheetah, Hopper, Walker2d)
 - **Algorithms**: PPO vs ES
 - **Architecture**: 4 hidden layers with 32 units each
-- **Key Result**: PPO shows inconsistent performance across seeds but faster convergence when successful; ES more stable but significantly slower
+- **Key Result**: PPO shows inconsistent performance across seeds and environments - while it converges 20x faster than ES in HalfCheetah, it fails to converge in Walker2d and Hopper. ES is slower but provides more stable and repeatable outcomes across all environments.
 
 ## Getting Started
 
@@ -82,6 +95,12 @@ pip install pygame
 pip install ple  # PyGame Learning Environment (for Flappy Bird)
 pip install matplotlib
 pip install brax  # For MuJoCo environments
+pip install jax[cuda]  # For GPU support
+pip install imageio[ffmpeg]  # For video recording
+pip install mujoco  # MuJoCo physics engine
+pip install mujoco_mjx  # MuJoCo MJX implementation
+pip install joblib  # For parallel processing
+pip install pre-commit  # For code quality checks
 ```
 ### Running Experiments
 
@@ -127,8 +146,8 @@ python run_dqn.py
 
 #### MuJoCo
 ```bash
-cd MuJoCo/
-# Follow similar pattern with respective training scripts
+cd Mujoco/
+python src/es_drl/main_es.py --config path/to/config.yaml --seed 42 --env_id hopper
 ```
 
 ## Algorithm Implementations
