@@ -16,19 +16,32 @@ Deep Reinforcement Learning has shown remarkable success in complex sequential d
 ## Repository Structure
 
 ```
-├── Breakout/
-│   └── breakout-dqn/
-│       ├── breakout_es.py      # Main ES training script for Breakout
-│       ├── breakout_sb3.py     # Main DQN training script for Breakout
-│       ├── es.py               # Modular ES algorithm implementation
-│       ├── breakout_dqn_model.py  # BreakoutDQN model definition
-│       ├── base_model.py       # Base model interface
-│       ├── callbacks.py        # Custom callbacks for WandB logging
-│       └── eval.py            # Evaluation script for loading checkpoints
-├── Flappy_Bird/
-│   └── [Flappy Bird implementation files]
-└── MuJoCo/
-    └── [MuJoCo implementation files]
+├── Breakout
+│   ├── breakout-dqn
+│   │   ├── base_model.py
+│   │   ├── breakout_dqn_model.py
+│   │   ├── breakout_es.py
+│   │   ├── breakout_sb3.py
+│   │   ├── callbacks.py
+│   │   ├── es.py
+│   │   └── eval.py
+│   ├── requirements.txt
+│   ├── run.batch
+│   └── run.sh
+├── FlappyBird
+│   ├── es_dqn_flappy.mp4
+│   ├── flappy_gym_env.py
+│   ├── plot_dqn_es.py
+│   ├── plot_es.py
+│   ├── run_dqn.py
+│   ├── run_es.py
+│   ├── train_dqn.py
+│   ├── train_dqn_es.py
+│   └── train_es.py
+├── MuJoCo/
+│   └── [MuJoCo implementation files]
+└── README.md
+
 ```
 
 ## Environments
@@ -65,6 +78,9 @@ pip install numpy>=1.21.0
 pip install opencv-python>=4.5.0
 pip install tensorboard>=2.14.0
 pip install wandb
+pip install pygame
+pip install ple  # PyGame Learning Environment (for Flappy Bird)
+pip install matplotlib
 pip install brax  # For MuJoCo environments
 ```
 ### Running Experiments
@@ -84,9 +100,29 @@ python breakout_sb3.py
 ```
 
 #### Flappy Bird
+
+**Training with DQN:**
 ```bash
 cd Flappy_Bird/
-# Follow similar pattern with respective training scripts
+python train_dqn.py
+```
+
+**Training with ES:**
+```bash
+cd Flappy_Bird/
+python train_es.py
+```
+
+**Training DQN with ES pretrained:**
+```bash
+cd Flappy_Bird/
+python train_dqn_es.py
+```
+
+**Run DQN/ES policy:**
+```bash
+cd Flappy_Bird/
+python run_dqn.py
 ```
 
 #### MuJoCo
