@@ -74,7 +74,7 @@ Deep Reinforcement Learning has shown remarkable success in complex sequential d
 - **Key Result**: ES struggles with high-dimensional input spaces; DQN maintains performance advantage
 
 ### 3. MuJoCo Environments
-- **Type**: Continuous control tasks (HalfCheetah, Hopper, Walker2d)
+- **Type**: Continuous control tasks (HalfCheetah, Hopper, Walker2d, Humanoid, Reacher, Swimmer)
 - **Algorithms**: PPO vs ES
 - **Architecture**: 4 hidden layers with 32 units each
 - **Key Result**: PPO shows inconsistent performance across seeds and environments - while it converges 20x faster than ES in HalfCheetah, it fails to converge in Walker2d and Hopper. ES is slower but provides more stable and repeatable outcomes across all environments.
@@ -180,7 +180,7 @@ python src/es_drl/main_es.py --config path/to/config.yaml --seed 42 --env_id hop
 
 ### MuJoCo
 - **PPO**: Default Brax configurations with 8192 parallel environments
-- **ES**: Lightweight architecture for efficient optimization
+- **ES**: Population size 4096, noise std 0.01, learning rate 0.01, lightweight architecture for efficient optimization
 
 ## Logging and Monitoring
 
@@ -196,7 +196,7 @@ The repository uses **Weights & Biases (WandB)** for experiment tracking:
 |-------------|---------------|-----------------|-------------------|
 | Flappy Bird | Good stability | Higher final reward | ✅ Effective |
 | Breakout | Poor scaling | Strong performance | ❌ Limited |
-| MuJoCo | Stable but slow | Fast but unstable | ❌ No improvement |
+| MuJoCo | Stable but slow | Fast but inconsistent | ❌ No improvement |
 
 ## Authors
 
