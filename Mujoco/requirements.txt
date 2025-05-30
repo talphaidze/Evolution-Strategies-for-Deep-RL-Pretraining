@@ -1,0 +1,10 @@
+jax[cuda]
+imageio[ffmpeg]
+mujoco
+mujoco_mjx
+matplotlib
+wandb
+brax
+joblib
+pre-commit
+# torch  # Uncomment and add version if needed

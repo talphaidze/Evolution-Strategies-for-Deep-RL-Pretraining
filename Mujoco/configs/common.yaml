@@ -1,0 +1,19 @@
+env_id: "humanoid"
+seed: 42
+num_envs: 16
+
+# ES settings
+total_timesteps_es: 1000
+
+# TD3 fine-tuning settings
+total_timesteps_td3: 1000000
+
+results:
+  folder_es: "results/es"
+  folder_td3: "results/td3"
+video:
+  folder_es:    "videos/es"
+  folder_td3:   "videos/td3"
+  freq_es:      100
+  freq_td3:     100000
+  length:       1000
