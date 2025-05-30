@@ -18,13 +18,13 @@ Deep Reinforcement Learning has shown remarkable success in complex sequential d
 ```
 ├── Breakout
 │   ├── breakout-dqn
-│   │   ├── base_model.py
-│   │   ├── breakout_dqn_model.py
-│   │   ├── breakout_es.py
-│   │   ├── breakout_sb3.py
-│   │   ├── callbacks.py
-│   │   ├── es.py
-│   │   └── eval.py
+│   │   ├── base_model.py # Base model interface
+│   │   ├── breakout_dqn_model.py # BreakoutDQN model definition
+│   │   ├── breakout_es.py # Main ES training script for Breakout
+│   │   ├── breakout_sb3.py # Main DQN training script for Breakout
+│   │   ├── callbacks.py # Custom callbacks for WandB logging
+│   │   ├── es.py # Modular ES algorithm implementation
+│   │   └── eval.py # Evaluation script for loading checkpoints
 │   ├── requirements.txt
 │   ├── run.batch
 │   └── run.sh
